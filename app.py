@@ -14,15 +14,13 @@ DATA_FILE = "data.json"
 USER_DB = "users.json"
 MAX_ATTEMPTS = 3
 
-# --- Enhanced Security Animations ---
+# --- Lottie Animations ---
 ANIMATIONS = {
     "register": "https://assets1.lottiefiles.com/packages/lf20_jcikwtux.json",
     "login": "https://assets1.lottiefiles.com/packages/lf20_hu9cd9.json",
     "success": "https://assets1.lottiefiles.com/packages/lf20_yjgbpsef.json",
     "error": "https://assets1.lottiefiles.com/packages/lf20_gnvsa7vy.json",
-    "secure": "https://assets1.lottiefiles.com/packages/lf20_q5kxy7tz.json",
-    "vault": "https://assets1.lottiefiles.com/packages/lf20_5tkzkblw.json",
-    "security": "https://assets1.lottiefiles.com/packages/lf20_5tkzkblw.json"
+    "vault": "https://assets1.lottiefiles.com/packages/lf20_5tkzkblw.json"
 }
 
 # --- Helper Functions ---
@@ -84,7 +82,7 @@ def validate_password(password):
         return False, "Password must contain at least one special character"
     return True, "Password is valid"
 
-# --- UI Configuration ---
+# --- Page Config ---
 st.set_page_config(
     page_title="Mehak's DataVault Pro",
     page_icon="🔒",
@@ -92,7 +90,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with cyan footer
+# --- Custom CSS ---
 st.markdown("""
 <style>
     .stButton>button {
@@ -111,14 +109,14 @@ st.markdown("""
         border: 1px solid #00ACC1 !important;
     }
     .sidebar .sidebar-content {
-        background: linear-gradient(180deg, #E0F7FA, #B2EBF2);
+        background: linear-gradient(180deg, #FCE4EC, #F8BBD0);
     }
     .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
-        background-color: #00BCD4;
+        background-color: #C2185B;
         color: white;
         text-align: center;
         padding: 15px;
@@ -152,306 +150,101 @@ st.markdown("""
 def footer():
     st.markdown("""
     <div class="footer">
-        <div class="quote">"Work hard. Push yourself, because no one else is going to do it for you." - Bruce Schneie</div>
+        <div class="quote">"Work hard. Push yourself, because no one else is going to do it for you." - Bruce Schneier</div>
         <div class="credit">Created with ❤ by Farah Asghar </div>
     </div>
     """, unsafe_allow_html=True)
 
-# --- Authentication Functions ---
+# --- Authentication ---
 def register_user():
     st.title("👤 Create Your Account")
-   
     col1, col2 = st.columns([1, 2])
     with col1:
         lottie_register = load_lottie(ANIMATIONS["register"])
         if lottie_register:
             st_lottie(lottie_register, height=200)
-        else:
-            st.image("https://cdn-icons-png.flaticon.com/512/4406/4406232.png", width=150)
-   
     with col2:
         with st.form("register_form"):
             username = st.text_input("Choose a Username:")
             email = st.text_input("Email Address:")
             password = st.text_input("Create Password:", type="password")
             confirm_password = st.text_input("Confirm Password:", type="password")
-           
             if st.form_submit_button("Register"):
                 users = load_users()
-               
                 if username in users:
                     st.error("Username already exists!")
                     return
-               
                 if password != confirm_password:
                     st.error("Passwords do not match!")
                     return
-               
                 is_valid, message = validate_password(password)
                 if not is_valid:
                     st.error(message)
                     return
-               
                 users[username] = {
                     "email": email,
                     "password": hash_password(password),
                     "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
                 }
-               
                 save_users(users)
                 st.session_state.current_user = username
                 st.session_state.is_logged_in = True
-               
-                lottie_success = load_lottie(ANIMATIONS["success"])
-                if lottie_success:
-                    st_lottie(lottie_success, height=150)
-               
                 st.success("Account created successfully! You are now logged in.")
                 time.sleep(2)
                 st.rerun()
 
 def login_user():
     st.title("🔑 Welcome Back!")
-   
     col1, col2 = st.columns([1, 2])
     with col1:
         lottie_login = load_lottie(ANIMATIONS["login"])
         if lottie_login:
             st_lottie(lottie_login, height=200)
-        else:
-            st.image("https://cdn-icons-png.flaticon.com/512/295/295128.png", width=150)
-   
     with col2:
         with st.form("login_form"):
             username = st.text_input("Username:")
             password = st.text_input("Password:", type="password")
-           
             if st.form_submit_button("Login"):
                 users = load_users()
-               
                 if username not in users:
                     st.error("Username not found!")
                     return
-               
                 if hash_password(password) != users[username]["password"]:
                     if "login_attempts" not in st.session_state:
                         st.session_state.login_attempts = 0
                     st.session_state.login_attempts += 1
-                   
                     attempts_left = MAX_ATTEMPTS - st.session_state.login_attempts
-                   
-                    lottie_error = load_lottie(ANIMATIONS["error"])
-                    if lottie_error:
-                        st_lottie(lottie_error, height=150)
-                   
                     st.error(f"Invalid password! Attempts left: {attempts_left}")
-                   
                     if st.session_state.login_attempts >= MAX_ATTEMPTS:
-                        st.error("Account locked due to too many failed attempts. Please try again later.")
+                        st.error("Account locked due to too many failed attempts.")
                         time.sleep(3)
                         st.stop()
                     return
-               
                 st.session_state.current_user = username
                 st.session_state.is_logged_in = True
-               
-                lottie_success = load_lottie(ANIMATIONS["success"])
-                if lottie_success:
-                    st_lottie(lottie_success, height=150)
-               
                 st.success("Login successful!")
                 time.sleep(1)
                 st.rerun()
 
-# --- Main Application ---
+# --- Main App ---
 def main_app():
-    st.sidebar.title(f"🔐 Secure Data Encryption App")
+    st.sidebar.title("🔐 Secure Data Encryption App")
     st.sidebar.markdown(f"Welcome, *{st.session_state.current_user}*")
-   
     menu = ["Dashboard", "Store Secrets", "Retrieve Secrets", "Account Settings", "Logout"]
     choice = st.sidebar.radio("Navigation", menu)
-   
+
     if choice == "Dashboard":
         st.title("🌟 Mehak's Secure Data Vault")
-       
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            lottie_vault = load_lottie(ANIMATIONS["vault"])
-            if lottie_vault:
-                st_lottie(lottie_vault, height=200)
-            else:
-                st.image("https://cdn-icons-png.flaticon.com/512/2889/2889676.png", width=150)
-       
-        with col2:
-            st.markdown("""
-            ### Your Personal Security Fortress
-           
-            *Safeguard your digital life with:*
-            - Military-grade AES-256 encryption
-            - Personalized user accounts
-            - Secure secret storage
-            - Beautiful intuitive interface
-           
-            *How to use:*
-            1. Store sensitive information with unique labels
-            2. Retrieve with your secret passkey
-            3. All data encrypted at rest
-            """)
-   
+        st.markdown("""
+        ### Your Personal Security Fortress
+        *Safeguard your digital life with:*
+        - Military-grade AES-256 encryption
+        - Personalized user accounts
+        - Secure secret storage
+        """)
     elif choice == "Store Secrets":
         st.title("💌 Store Your Secrets")
-       
         with st.form("store_form"):
-            label = st.text_input("Secret Label (e.g., 'Bank PIN'):")
-            data = st.text_area("Confidential Data:", height=200)
-            passkey = st.text_input("Encryption Passkey:", type="password",
-                                 help="Minimum 8 characters with special characters")
-           
-            if st.form_submit_button("🔒 Lock Away Secret"):
-                if len(label) < 3:
-                    st.error("Label must be at least 3 characters")
-                elif len(passkey) < 8:
-                    st.error("Passkey must be at least 8 characters")
-                elif not data.strip():
-                    st.error("Please enter data to encrypt")
-                else:
-                    encrypted = encrypt_data(data)
-                    stored_data = load_data()
-                   
-                    if st.session_state.current_user not in stored_data:
-                        stored_data[st.session_state.current_user] = {}
-                   
-                    stored_data[st.session_state.current_user][label] = {
-                        "data": encrypted,
-                        "passkey": hash_password(passkey),
-                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                   
-                    save_data(stored_data)
-                   
-                    lottie_success = load_lottie(ANIMATIONS["success"])
-                    if lottie_success:
-                        st_lottie(lottie_success, height=150)
-                   
-                    st.markdown("""
-                    <div class="success-box">
-                        <h3>✅ Secret safely locked away!</h3>
-                        <p><b>Remember:</b> Your passkey is the only key to this secret</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-   
-    elif choice == "Retrieve Secrets":
-        st.title("🔓 Retrieve Your Secrets")
-       
-        stored_data = load_data()
-        user_data = stored_data.get(st.session_state.current_user, {})
-       
-        if not user_data:
-            st.warning("You haven't stored any secrets yet.")
-            return
-       
-        with st.form("retrieve_form"):
-            label = st.selectbox("Select Secret:", options=list(user_data.keys()))
-            passkey = st.text_input("Enter Passkey:", type="password")
-           
-            if st.form_submit_button("🔑 Unlock Secret"):
-                if label in user_data:
-                    if hash_password(passkey) == user_data[label]["passkey"]:
-                        decrypted = decrypt_data(user_data[label]["data"])
-                       
-                        lottie_success = load_lottie(ANIMATIONS["success"])
-                        if lottie_success:
-                            st_lottie(lottie_success, height=150)
-                       
-                        st.markdown("""
-                        <div class="success-box">
-                            <h3>✅ Secret unlocked successfully!</h3>
-                        </div>
-                        """, unsafe_allow_html=True)
-                       
-                        st.text_area("Your Secret:", value=decrypted, height=200)
-                    else:
-                        if "retrieve_attempts" not in st.session_state:
-                            st.session_state.retrieve_attempts = 0
-                        st.session_state.retrieve_attempts += 1
-                       
-                        attempts_left = MAX_ATTEMPTS - st.session_state.retrieve_attempts
-                       
-                        lottie_error = load_lottie(ANIMATIONS["error"])
-                        if lottie_error:
-                            st_lottie(lottie_error, height=150)
-                       
-                        st.markdown(f"""
-                        <div class="error-box">
-                            <h3>❌ Wrong Passkey!</h3>
-                            <p>Attempts remaining: {attempts_left}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                       
-                        if st.session_state.retrieve_attempts >= MAX_ATTEMPTS:
-                            st.error("Too many failed attempts. Please try again later.")
-                            time.sleep(2)
-                            st.session_state.retrieve_attempts = 0
-                else:
-                    st.error("No secret found with that label")
-   
-    elif choice == "Account Settings":
-        st.title("⚙ Your Account")
-       
-        users = load_users()
-        user_info = users[st.session_state.current_user]
-       
-        st.subheader("Profile Information")
-        st.write(f"👤 Username: {st.session_state.current_user}")
-        st.write(f"📧 Email: {user_info['email']}")
-        st.write(f"🕒 Member since: {user_info['created_at']}")
-       
-        st.subheader("Change Password")
-        with st.form("change_password_form"):
-            current_password = st.text_input("Current Password:", type="password")
-            new_password = st.text_input("New Password:", type="password")
-            confirm_password = st.text_input("Confirm New Password:", type="password")
-           
-            if st.form_submit_button("Update Password"):
-                if hash_password(current_password) != user_info["password"]:
-                    st.error("Current password is incorrect")
-                elif new_password != confirm_password:
-                    st.error("New passwords don't match")
-                else:
-                    is_valid, message = validate_password(new_password)
-                    if not is_valid:
-                        st.error(message)
-                    else:
-                        users[st.session_state.current_user]["password"] = hash_password(new_password)
-                        save_users(users)
-                        st.success("Password updated successfully!")
-   
-    elif choice == "Logout":
-        st.session_state.is_logged_in = False
-        st.session_state.current_user = None
-        st.success("Logged out successfully!")
-        time.sleep(1)
-        st.rerun()
-
-# --- Initialize Session State ---
-if "is_logged_in" not in st.session_state:
-    st.session_state.is_logged_in = False
-if "current_user" not in st.session_state:
-    st.session_state.current_user = None
-
-# --- Run Application ---
-if not st.session_state.is_logged_in:
-    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/295/295128.png", width=80)
-    st.sidebar.markdown("### Secure Data Encryption App")
-    auth_choice = st.sidebar.radio("Menu", ["Login", "Register"])
-   
-    if auth_choice == "Login":
-        login_user()
-    else:
-        register_user()
-else:
-    main_app()
-
-# Add the cyan footer to every page
-footer()
-st.markdown("> Quoted text")
+            label = st.text_input("Secret Label:")
+            data = st.text_area("Confidential Data:")
+            passkey = st.text_input("Encryption Passkey:", type="password

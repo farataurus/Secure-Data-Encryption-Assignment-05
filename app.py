@@ -84,7 +84,7 @@ def validate_password(password):
 
 # --- Page Config ---
 st.set_page_config(
-    page_title="Mehak's DataVault Pro",
+    page_title="Farii Secure Data Encryption App",
     page_icon="🔒",
     layout="centered",
     initial_sidebar_state="expanded"

@@ -247,4 +247,86 @@ def main_app():
         with st.form("store_form"):
             label = st.text_input("Secret Label:")
             data = st.text_area("Confidential Data:")
-            passkey = st.text_input("Encryption Passkey:", type="password
+            passkey = st.text_input("Encryption Passkey:", type="password")
+            if st.form_submit_button("🔒 Lock Away Secret"):
+                if len(label) < 3 or not data.strip() or len(passkey) < 8:
+                    st.error("Please fill all fields properly.")
+                else:
+                    encrypted = encrypt_data(data)
+                    stored_data = load_data()
+                    if st.session_state.current_user not in stored_data:
+                        stored_data[st.session_state.current_user] = {}
+                    stored_data[st.session_state.current_user][label] = {
+                        "data": encrypted,
+                        "passkey": hash_password(passkey),
+                        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    save_data(stored_data)
+                    st.success("✅ Secret locked away safely!")
+    elif choice == "Retrieve Secrets":
+        st.title("🔓 Retrieve Your Secrets")
+        stored_data = load_data()
+        user_data = stored_data.get(st.session_state.current_user, {})
+        if not user_data:
+            st.warning("You haven't stored any secrets yet.")
+            return
+        with st.form("retrieve_form"):
+            label = st.selectbox("Select Secret:", options=list(user_data.keys()))
+            passkey = st.text_input("Enter Passkey:", type="password")
+            if st.form_submit_button("🔑 Unlock Secret"):
+                if hash_password(passkey) == user_data[label]["passkey"]:
+                    decrypted = decrypt_data(user_data[label]["data"])
+                    st.text_area("Your Secret:", value=decrypted, height=200)
+                else:
+                    st.error("Wrong passkey!")
+    elif choice == "Account Settings":
+        st.title("⚙ Account Settings")
+        users = load_users()
+        user_info = users[st.session_state.current_user]
+        st.write(f"👤 Username: {st.session_state.current_user}")
+        st.write(f"📧 Email: {user_info['email']}")
+        st.write(f"🕒 Member since: {user_info['created_at']}")
+        with st.form("change_password_form"):
+            current_password = st.text_input("Current Password:", type="password")
+            new_password = st.text_input("New Password:", type="password")
+            confirm_password = st.text_input("Confirm New Password:", type="password")
+            if st.form_submit_button("Update Password"):
+                if hash_password(current_password) != user_info["password"]:
+                    st.error("Incorrect current password")
+                elif new_password != confirm_password:
+                    st.error("Passwords do not match")
+                else:
+                    is_valid, msg = validate_password(new_password)
+                    if not is_valid:
+                        st.error(msg)
+                    else:
+                        users[st.session_state.current_user]["password"] = hash_password(new_password)
+                        save_users(users)
+                        st.success("Password updated successfully!")
+    elif choice == "Logout":
+        st.session_state.is_logged_in = False
+        st.session_state.current_user = None
+        st.success("Logged out!")
+        time.sleep(1)
+        st.rerun()
+
+# --- Session State Init ---
+if "is_logged_in" not in st.session_state:
+    st.session_state.is_logged_in = False
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
+
+# --- App Launcher ---
+if not st.session_state.is_logged_in:
+    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/295/295128.png", width=80)
+    st.sidebar.markdown("### Secure Data Encryption App")
+    auth_choice = st.sidebar.radio("Menu", ["Login", "Register"])
+    if auth_choice == "Login":
+        login_user()
+    else:
+        register_user()
+else:
+    main_app()
+
+# --- Footer Always at Bottom ---
+footer()

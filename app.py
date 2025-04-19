@@ -282,7 +282,13 @@ def main_app():
     elif choice == "Account Settings":
         st.title("⚙ Account Settings")
         users = load_users()
-        user_info = users[st.session_state.current_user]
+        user_info = users.get(st.session_state.current_user)
+        if not user_info:
+            st.error("User info not found. Please login again.")
+            st.session_state.is_logged_in = False
+            st.session_state.current_user = None
+            time.sleep(2)
+            st.rerun()
         st.write(f"👤 Username: {st.session_state.current_user}")
         st.write(f"📧 Email: {user_info['email']}")
         st.write(f"🕒 Member since: {user_info['created_at']}")
@@ -306,17 +312,17 @@ def main_app():
     elif choice == "Logout":
         st.session_state.is_logged_in = False
         st.session_state.current_user = None
-        st.success("Logged out!")
+        st.success("Logged out successfully!")
         time.sleep(1)
         st.rerun()
 
-# --- Session State Init ---
+# --- Session State Initialization ---
 if "is_logged_in" not in st.session_state:
     st.session_state.is_logged_in = False
 if "current_user" not in st.session_state:
     st.session_state.current_user = None
 
-# --- App Launcher ---
+# --- App Launch ---
 if not st.session_state.is_logged_in:
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/295/295128.png", width=80)
     st.sidebar.markdown("### Secure Data Encryption App")
@@ -328,5 +334,5 @@ if not st.session_state.is_logged_in:
 else:
     main_app()
 
-# --- Footer Always at Bottom ---
+# --- Sticky Footer ---
 footer()
